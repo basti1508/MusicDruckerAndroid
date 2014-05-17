@@ -1,12 +1,14 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="MusicDrucker\MainActivity.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="MusicDrucker\Printer.cs">
     <Files>
-      <File FileName="MusicDrucker\MainActivity.cs" Line="7" Column="16" />
+      <File FileName="MusicDrucker\MainActivity.cs" Line="115" Column="47" />
+      <File FileName="MusicDrucker\Printer.cs" Line="320" Column="6" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.MusicDrucker AndroidDeviceId-Debug="cc000717" MonoForAntroid.PreferredDevice="3.7&quot; WVGA (Nexus One)" />
 </Properties>

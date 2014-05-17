@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Collections;
 using System.Collections.Specialized;
+using Android.Util;
 
 namespace MusicDrucker
 {
@@ -18,8 +19,6 @@ namespace MusicDrucker
 
 		private string errormsg = "";
 		private string logfile = "";
-
-		private long filesSend;
 
 		private const int pport = 515;			// hard coded LPR/LPD port number
 
@@ -131,14 +130,6 @@ namespace MusicDrucker
 			}
 		}
 
-		public long FilesSend
-		{
-			get
-			{
-				return filesSend;
-			}
-		}
-
 
 		#endregion properties
 
@@ -166,6 +157,7 @@ namespace MusicDrucker
 			if (!nws.CanWrite)
 			{
 				errormsg = "-1: cannot write to network stream";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -205,6 +197,7 @@ namespace MusicDrucker
 			if (ack[0] != 0)
 			{
 				errormsg = "-2: no ACK on RESTART";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -224,49 +217,29 @@ namespace MusicDrucker
 		/// wait for large files.
 		/// </summary>
 		/// <param name="fileName">path to the file to be printed</param>
-		/// <param name="deleteFileAfterPrint">Flag to indicate to delete the file after it is printed</param>
-		public void LPR(string fileName, bool deleteFileAfterPrint)
+		public void LPR(string fileName)
 		{
 			string msg = "LPR: " + fileName;
 			WriteLog(msg);
 			if (!File.Exists(fileName))
 			{
 				errormsg = "-10: " + fileName + " does not exist.";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				return;
 			}
-
-			// BUG: 
-			// filesSend is never reset but as it is a long
-			// it will not overflow very soon
-			filesSend++;
-			PrintQueue.Enqueue(fileName);
 
 			// start every print as a separate thread;
 			// 
 			// implementation of deleteAfterPrintFlag
 			// thanx to Dion Slijp
-			ParameterizedThreadStart myThreadDelegate = new ParameterizedThreadStart(ProcessLPR);
-			Thread myThread = new Thread(myThreadDelegate);
-			myThread.Start(deleteFileAfterPrint);
+//			ParameterizedThreadStart myThreadDelegate = new ParameterizedThreadStart(ProcessLPR);
+//			Thread myThread = new Thread(myThreadDelegate);
+//			myThread.Start(fileName);
+			ProcessLPR (fileName);
 
 			return;
 		}
-
-		/// <summary>
-		/// LPR call to print multiple files collected in a string collection.
-		/// </summary>
-		/// <param name="fileNames"></param>
-		public void LPR(StringCollection fileNames, bool deleteFileAfterPrint)
-		{
-			if (fileNames != null)
-			{
-				foreach (string fn in fileNames)
-				{
-					LPR(fn, deleteFileAfterPrint);
-				}
-			}
-		}
-
+			
 		// hacked by srinkes
 		public void ProcessLPR(StringCollection fileNames)
 		{
@@ -284,30 +257,15 @@ namespace MusicDrucker
 		{
 			try
 			{
-				SendFile(fileName, false);
+				SendFile(fileName);
 			}
 			catch (Exception ex)
 			{
 				errormsg = "-11: " + ex.Message + " " + fileName;
+				Log.Error ("MusicDrucker-Printer", errormsg);
 			}
 		}
 
-		/// <summary>
-		/// internal LPR work manager 
-		/// </summary>
-		private void ProcessLPR(object deleteFileAfterPrint)
-		{
-			string fname = "";
-			try
-			{
-				fname = (string)PrintQueue.Dequeue();
-				SendFile(fname, (bool)deleteFileAfterPrint);
-			}
-			catch (Exception ex)
-			{
-				errormsg = "-11: " + ex.Message + " " + fname;
-			}
-		}
 
 		/// <summary>
 		/// Internal worker to send the file over LPR. If the sending succeeds 
@@ -316,7 +274,7 @@ namespace MusicDrucker
 		/// </summary>
 		/// <param name="fname">filename to send</param>
 		/// <param name="del">flag delete after print</param>
-		private void SendFile(string fname, bool del)
+		private void SendFile(string fname)
 		{
 			errormsg = "";
 
@@ -329,6 +287,7 @@ namespace MusicDrucker
 			if (!nws.CanWrite)
 			{
 				errormsg = "-20: cannot write to network stream";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -358,7 +317,7 @@ namespace MusicDrucker
 			int pos = 0;
 			buffer[pos++] = 2;
 			for (int i = 0; i < pqueue.Length; i++)
-			{
+			{l
 				buffer[pos++] = (byte)pqueue[i];
 			}
 			buffer[pos++] = (byte)'\n';
@@ -372,6 +331,7 @@ namespace MusicDrucker
 			if (ack[0] != 0)
 			{
 				errormsg = "-21: no ACK on COMMAND 02.";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -410,6 +370,7 @@ namespace MusicDrucker
 			if (ack[0] != 0)
 			{
 				errormsg = "-22: no ACK on SUBCMD 2";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -433,6 +394,7 @@ namespace MusicDrucker
 			if (ack[0] != 0)
 			{
 				errormsg = "-23: no ACK on CONTROLFILE";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -474,6 +436,7 @@ namespace MusicDrucker
 			if (ack[0] != 0)
 			{
 				errormsg = "-24: no ACK on SUBCMD 3";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -529,6 +492,7 @@ namespace MusicDrucker
 			if (ack[0] != 0)
 			{
 				errormsg = "-25: no ACK on DATAFILE";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -536,10 +500,6 @@ namespace MusicDrucker
 
 			nws.Close();
 			tc.Close();
-
-			// all printed well
-			// should we delete the file?
-			if (del) File.Delete(fname);
 		}
 
 		#endregion LPR
@@ -577,6 +537,7 @@ namespace MusicDrucker
 			catch
 			{
 				errormsg = "-30:  Could not request queue";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				rv = errormsg;
 			}
 			return rv;
@@ -600,6 +561,7 @@ namespace MusicDrucker
 			if (!nws.CanWrite)
 			{
 				errormsg = "-40: cannot write to network stream";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return "";
@@ -685,6 +647,7 @@ namespace MusicDrucker
 			catch
 			{
 				errormsg = "-50: Could not remove job";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 			}
 			return;
 		}
@@ -706,6 +669,7 @@ namespace MusicDrucker
 			if (!nws.CanWrite)
 			{
 				errormsg = "-51: cannot write to network stream";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -761,6 +725,7 @@ namespace MusicDrucker
 			if (ack[0] != 0)
 			{
 				errormsg = "-52: no ACK on COMMAND 05";
+				Log.Error ("MusicDrucker-Printer", errormsg);
 				nws.Close();
 				tc.Close();
 				return;
@@ -819,13 +784,8 @@ namespace MusicDrucker
 		/// <param name="message">string to write in the logfile.</param>
 		private void WriteLog(string message)
 		{
-			if ((logfile != null) && (logfile != ""))
-			{
-				string msg = DateTime.Now.ToString() + "; " + message;
-				StreamWriter sw = new StreamWriter(logfile, true);
-				sw.WriteLine(msg);
-				sw.Close();
-			}
+			string msg = DateTime.Now.ToString() + "; " + message;
+			Log.Info ("Printer.cs", msg);
 		}
 		#endregion misc
 	}
